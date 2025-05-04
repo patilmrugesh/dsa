@@ -1,136 +1,76 @@
+// 4 Construct an expression tree from the given prefix expression eg. +--a*bc/def and traverse it using postordertraversal(non recursive) 
+// and then delete the entire tree.
+
 #include <iostream>
-#include <string.h>
-#include <stdlib.h>
+#include <cstring>
 using namespace std;
-struct node
-{
+
+struct Node {
     char data;
-    node *left;
-    node *right;
+    Node *left, *right;
+    Node(char val) : data(val), left(nullptr), right(nullptr) {}
 };
-class tree
-{
-    char prefix[20];
 
+class Stack {
+    Node* arr[30];
+    int top = -1;
 public:
-    node *top;
-    void expression(char[]);
-    void display(node *);
-    void non_rec_postorder(node *);
-    void del(node *);
+    void push(Node* n) { arr[++top] = n; }
+    Node* pop() { return arr[top--]; }
+    bool empty() { return top == -1; }
 };
-class stack1
-{
-    node *data[30];
-    int top;
 
+class ExprTree {
 public:
-    stack1()
-    {
-        top = -1;
+    Node* root = nullptr;
+
+    void build(const char* pre) {
+        Stack s;
+        for (int i = strlen(pre) - 1; i >= 0; i--) {
+            Node* node = new Node(pre[i]);
+            if (isalpha(pre[i])) s.push(node);
+            else {
+                node->left = s.pop();
+                node->right = s.pop();
+                s.push(node);
+            }
+        }
+        root = s.pop();
     }
-    int empty()
-    {
-        if (top == -1)
-            return 1;
-        else
-            return 0;
+
+    void postorderNonRec(Node* node) {
+        Stack s1, s2;
+        s1.push(node);
+        while (!s1.empty()) {
+            Node* temp = s1.pop();
+            s2.push(temp);
+            if (temp->left) s1.push(temp->left);
+            if (temp->right) s1.push(temp->right);
+        }
+        while (!s2.empty()) cout << s2.pop()->data;
     }
-    void push(node *p)
-    {
-        data[++top] = p;
-    }
-    node *pop()
-    {
-        return (data[top--]);
+
+    void deleteTree(Node* node) {
+        if (!node) return;
+        deleteTree(node->left);
+        deleteTree(node->right);
+        cout << "Deleting: " << node->data << endl;
+        delete node;
     }
 };
-void tree::expression(char prefix[])
-{
-    char c;
-    stack1 s;
-    node *t1, *t2;
-    int len, i;
-    len = strlen(prefix);
-    for (i = len - 1; i >= 0; i--)
-    {
-        top = new node;
-        top->left = NULL;
 
-        top->right = NULL;
-        if (isalpha(prefix[i]))
-        {
-            top->data = prefix[i];
-            s.push(top);
-        }
-        else if (prefix[i] == '+' || prefix[i] == '*' || prefix[i] == '-' || prefix[i] == '/')
-        {
-            t2 = s.pop();
-            t1 = s.pop();
-            top->data = prefix[i];
-            top->left = t2;
-            top->right = t1;
-            s.push(top);
-        }
-    } // end for
-    top = s.pop();
-}
-void tree ::display(node *root)
-{
-    if (root != NULL)
-    {
-        cout << root->data;
-        display(root->left);
-        display(root->right);
-    }
-}
-void tree ::non_rec_postorder(node *top)
-{
-    stack1 s1, s2;
-    node *T = top;
-    cout << "\n";
-    s1.push(T);
-    while (!s1.empty())
-    {
-        T = s1.pop();
-        s2.push(T);
-        if (T->left != NULL)
-            s1.push(T->left);
-        if (T->right != NULL)
-            s1.push(T->right);
-    }
-    while (!s2.empty())
-    {
-        top = s2.pop();
-        cout << top->data;
-    }
-}
-void tree::del(node *node)
-{
-    if (node == NULL)
-        return;
-    del(node->left);
-    del(node->right);
-    cout << "Deleting Node data:" << node->data << endl;
-    free(node);
-}
-
-int main()
-{
+int main() {
     char expr[20];
-    tree t;
-    cout << "Enter Prefix Expression:";
+    cout << "Enter Prefix: ";
     cin >> expr;
-    cout << expr << endl;
-    t.expression(expr);
-    cout << "Postorder traversal:";
-    t.non_rec_postorder(t.top);
-    cout << "\nDo you want to delete?(1/0)";
-    int op;
-    cin >> op;
-    if (op == 1)
-    {
-        t.del(t.top);
-    }
+
+    ExprTree t;
+    t.build(expr);
+    cout << "Postorder: ";
+    t.postorderNonRec(t.root);
+
+    cout << "\nDelete tree? (1/0): ";
+    int op; cin >> op;
+    if (op) t.deleteTree(t.root);
     return 0;
 }
