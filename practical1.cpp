@@ -1,43 +1,42 @@
+// 1 Consider telephone book database of N clients. Make use of a hash table 
+// implementation to quickly look up client‘s telephone number. Make use of two
+// collision handling techniques and compare them using number of comparisons 
+// required to find a set of telephone numbers
+
 #include <iostream>
 #include <string>
 using namespace std;
 
-const int TABLE_SIZE = 10;
+const int SIZE = 10;
 
-struct ClientNode {
+struct Node {
     string name;
     long long phone;
-    ClientNode* next;
-    ClientNode(string n, long long p) : name(n), phone(p), next(nullptr) {}
+    Node* next;
+    Node(string n, long long p) : name(n), phone(p), next(nullptr) {}
 };
 
-// Hash Table with Chaining
-class HashTableChaining {
-    ClientNode* table[TABLE_SIZE];
+class HashChaining {
+    Node* table[SIZE]{};
 
 public:
-    HashTableChaining() {
-        for (int i = 0; i < TABLE_SIZE; ++i) table[i] = nullptr;
-    }
-
     int hashFunc(string key) {
         int sum = 0;
         for (char c : key) sum += c;
-        return sum % TABLE_SIZE;
+        return sum % SIZE;
     }
 
     void insert(string name, long long phone) {
-        int index = hashFunc(name);
-        ClientNode* newNode = new ClientNode(name, phone);
-        newNode->next = table[index];
-        table[index] = newNode;
+        int idx = hashFunc(name);
+        Node* newNode = new Node(name, phone);
+        newNode->next = table[idx];
+        table[idx] = newNode;
     }
 
-    bool search(string name, int &comparisons) {
-        int index = hashFunc(name);
-        ClientNode* curr = table[index];
+    bool search(string name, int &comp) {
+        Node* curr = table[hashFunc(name)];
         while (curr) {
-            comparisons++;
+            comp++;
             if (curr->name == name) {
                 cout << "Found: " << curr->phone << endl;
                 return true;
@@ -48,111 +47,87 @@ public:
     }
 
     void display() {
-        for (int i = 0; i < TABLE_SIZE; ++i) {
+        for (int i = 0; i < SIZE; ++i) {
             cout << i << ": ";
-            ClientNode* curr = table[i];
-            while (curr) {
+            for (Node* curr = table[i]; curr; curr = curr->next)
                 cout << "(" << curr->name << ", " << curr->phone << ") -> ";
-                curr = curr->next;
-            }
             cout << "NULL\n";
         }
     }
 };
 
-// Hash Table with Linear Probing
-class HashTableLinearProbing {
-    string names[TABLE_SIZE];
-    long long phones[TABLE_SIZE];
+class HashLinear {
+    string names[SIZE];
+    long long phones[SIZE];
 
 public:
-    HashTableLinearProbing() {
-        for (int i = 0; i < TABLE_SIZE; ++i) names[i] = "";
-    }
+    HashLinear() { for (int i = 0; i < SIZE; ++i) names[i] = ""; }
 
     int hashFunc(string key) {
         int sum = 0;
         for (char c : key) sum += c;
-        return sum % TABLE_SIZE;
+        return sum % SIZE;
     }
 
     void insert(string name, long long phone) {
-        int index = hashFunc(name);
-        int startIndex = index;
-        while (names[index] != "") {
-            index = (index + 1) % TABLE_SIZE;
-            if (index == startIndex) {
-                cout << "Hash table is full!\n";
-                return;
-            }
+        int idx = hashFunc(name), start = idx;
+        while (!names[idx].empty()) {
+            idx = (idx + 1) % SIZE;
+            if (idx == start) return;
         }
-        names[index] = name;
-        phones[index] = phone;
+        names[idx] = name;
+        phones[idx] = phone;
     }
 
-    bool search(string name, int &comparisons) {
-        int index = hashFunc(name);
-        int startIndex = index;
-        while (names[index] != "") {
-            comparisons++;
-            if (names[index] == name) {
-                cout << "Found: " << phones[index] << endl;
+    bool search(string name, int &comp) {
+        int idx = hashFunc(name), start = idx;
+        while (!names[idx].empty()) {
+            comp++;
+            if (names[idx] == name) {
+                cout << "Found: " << phones[idx] << endl;
                 return true;
             }
-            index = (index + 1) % TABLE_SIZE;
-            if (index == startIndex) break;
+            idx = (idx + 1) % SIZE;
+            if (idx == start) break;
         }
         return false;
     }
 
     void display() {
-        for (int i = 0; i < TABLE_SIZE; ++i) {
-            if (names[i] != "")
-                cout << i << ": (" << names[i] << ", " << phones[i] << ")\n";
-            else
-                cout << i << ": NULL\n";
-        }
+        for (int i = 0; i < SIZE; ++i)
+            cout << i << ": " << (names[i].empty() ? "NULL" : "(" + names[i] + ", " + to_string(phones[i]) + ")") << endl;
     }
 };
 
 int main() {
-    HashTableChaining chainingTable;
-    HashTableLinearProbing probingTable;
-
-    int choice;
+    HashChaining chain;
+    HashLinear probe;
+    int ch;
     string name;
     long long phone;
 
     do {
-        cout << "\n1. Insert\n2. Search\n3. Display\n4. Exit\nEnter choice: ";
-        cin >> choice;
-        switch (choice) {
-            case 1:
-                cout << "Enter name and phone: ";
-                cin >> name >> phone;
-                chainingTable.insert(name, phone);
-                probingTable.insert(name, phone);
-                break;
-            case 2: {
-                cout << "Enter name to search: ";
-                cin >> name;
-                int c1 = 0, c2 = 0;
-                cout << "\n-- Chaining --\n";
-                chainingTable.search(name, c1);
-                cout << "Comparisons: " << c1 << endl;
-                cout << "\n-- Linear Probing --\n";
-                probingTable.search(name, c2);
-                cout << "Comparisons: " << c2 << endl;
-                break;
-            }
-            case 3:
-                cout << "\nChaining Table:\n";
-                chainingTable.display();
-                cout << "\nLinear Probing Table:\n";
-                probingTable.display();
-                break;
+        cout << "\n1.Insert 2.Search 3.Display 4.Exit\nChoice: ";
+        cin >> ch;
+        if (ch == 1) {
+            cout << "Name Phone: ";
+            cin >> name >> phone;
+            chain.insert(name, phone);
+            probe.insert(name, phone);
+        } else if (ch == 2) {
+            cout << "Name to search: ";
+            cin >> name;
+            int c1 = 0, c2 = 0;
+            cout << "-- Chaining --\n";
+            chain.search(name, c1);
+            cout << "Comparisons: " << c1 << endl;
+            cout << "-- Linear Probing --\n";
+            probe.search(name, c2);
+            cout << "Comparisons: " << c2 << endl;
+        } else if (ch == 3) {
+            cout << "Chaining Table:\n"; chain.display();
+            cout << "Linear Probing Table:\n"; probe.display();
         }
-    } while (choice != 4);
-
+    } while (ch != 4);
     return 0;
 }
