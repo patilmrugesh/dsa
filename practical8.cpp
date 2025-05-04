@@ -1,27 +1,18 @@
+// 8Given sequence k = k1 <k2 < … <kn of n sorted keys, with a search probability pi for each
+// key ki . Build the Binary search tree that has the least search cost given the access
+// probability for each key?
+
+
 #include <iostream>
 #include <vector>
-#include <iomanip>
 using namespace std;
 
 class OBST {
     int n;
     vector<int> keys;
     vector<float> p, q;
-    vector<vector<float>> w, c;
-    vector<vector<int>> r;
-
-    int findMin(int i, int j) {
-        float minCost = 1e9;
-        int minK = -1;
-        for (int k = r[i][j - 1]; k <= r[i + 1][j]; ++k) {
-            float cost = c[i][k - 1] + c[k][j];
-            if (cost < minCost) {
-                minCost = cost;
-                minK = k;
-            }
-        }
-        return minK;
-    }
+    vector<vector<float>> cost;
+    vector<vector<int>> root;
 
 public:
     void input() {
@@ -30,79 +21,62 @@ public:
         keys.resize(n + 1);
         p.resize(n + 1);
         q.resize(n + 1);
-        w.assign(n + 2, vector<float>(n + 2, 0));
-        c.assign(n + 2, vector<float>(n + 2, 0));
-        r.assign(n + 2, vector<int>(n + 2, 0));
+        cost.assign(n + 2, vector<float>(n + 2, 0));
+        root.assign(n + 2, vector<int>(n + 2, 0));
 
-        cout << "Enter keys in sorted order:\n";
+        cout << "Enter keys (sorted):\n";
         for (int i = 1; i <= n; ++i) {
             cout << "Key " << i << ": ";
             cin >> keys[i];
         }
 
-        cout << "Enter success probabilities (p[i]) for each key:\n";
+        cout << "Enter success probabilities (p[i]):\n";
         for (int i = 1; i <= n; ++i) {
             cout << "p[" << i << "]: ";
             cin >> p[i];
         }
 
-        cout << "Enter failure probabilities (q[i]) for each gap:\n";
+        cout << "Enter failure probabilities (q[i]):\n";
         for (int i = 0; i <= n; ++i) {
             cout << "q[" << i << "]: ";
             cin >> q[i];
         }
     }
 
-    void buildOBST() {
+    void build() {
         for (int i = 0; i <= n; ++i) {
-            w[i][i] = q[i];
-            c[i][i] = 0;
-            r[i][i] = 0;
-
-            w[i][i + 1] = q[i] + q[i + 1] + p[i + 1];
-            c[i][i + 1] = w[i][i + 1];
-            r[i][i + 1] = i + 1;
+            cost[i][i] = q[i]; // empty tree
         }
 
-        for (int m = 2; m <= n; ++m) {
-            for (int i = 0; i <= n - m; ++i) {
-                int j = i + m;
-                w[i][j] = w[i][j - 1] + p[j] + q[j];
-                int k = findMin(i, j);
-                c[i][j] = w[i][j] + c[i][k - 1] + c[k][j];
-                r[i][j] = k;
+        for (int len = 1; len <= n; ++len) {
+            for (int i = 0; i <= n - len; ++i) {
+                int j = i + len;
+                cost[i][j] = 1e9;
+
+                float weight = 0;
+                for (int m = i + 1; m <= j; ++m)
+                    weight += p[m];
+                for (int m = i; m <= j; ++m)
+                    weight += q[m];
+
+                for (int r = i + 1; r <= j; ++r) {
+                    float c = cost[i][r - 1] + cost[r][j] + weight;
+                    if (c < cost[i][j]) {
+                        cost[i][j] = c;
+                        root[i][j] = r;
+                    }
+                }
             }
         }
 
-        cout << "\nOptimal cost: " << c[0][n];
-        cout << "\nRoot of OBST: Key[" << r[0][n] << "] = " << keys[r[0][n]] << "\n";
-    }
-
-    void displayTree() {
-        cout << "\nNode\tLeft\tRight";
-        printSubtree(0, n);
-    }
-
-    void printSubtree(int i, int j) {
-        int root = r[i][j];
-        if (root == 0) return;
-
-        int left = r[i][root - 1];
-        int right = r[root][j];
-
-        cout << "\n" << keys[root] << "\t"
-             << (left ? to_string(keys[left]) : "NULL") << "\t"
-             << (right ? to_string(keys[right]) : "NULL");
-
-        printSubtree(i, root - 1);
-        printSubtree(root, j);
+        cout << "\nMinimum cost of OBST: " << cost[0][n] << "\n";
+        cout << "Root key: " << keys[root[0][n]] << "\n";
     }
 };
 
 int main() {
-    OBST tree;
-    tree.input();
-    tree.buildOBST();
-    tree.displayTree();
+    OBST t;
+    t.input();
+    t.build();
     return 0;
 }
