@@ -1,26 +1,33 @@
+// 7There are flight paths between cities. If there is a flight between city A and city B then there is an edge between the cities. 
+// The cost of the edge can be the time that flight take to reach city B from A, or the amount of fuel used for the journey. 
+// Represent this as a graph. The node can be represented by airport name or name of the city. 
+// Use adjacency list representation of the graph or use adjacency matrix representation of the graph. 
+// Check whether the graph is connected or not. Justify the storage representation used.
+
 #include <iostream>
 #include <unordered_map>
 #include <list>
 #include <string>
+#include <set>
 using namespace std;
 
 // Graph to represent cities (nodes) and flights (edges)
 class Graph {
-    unordered_map<string, list<pair<string, int>>> adjList; // key: city, value: list of pairs (destination city, flight cost)
+    unordered_map<string, list<pair<string, int>>> adjList;
 
 public:
-    // Function to add a city (vertex)
+    // Add a city (vertex)
     void addCity(string city) {
-        adjList[city] = list<pair<string, int>>(); // Add city as key with empty edge list
+        adjList[city] = list<pair<string, int>>();
     }
 
-    // Function to add a flight (edge)
+    // Add a flight (edge) with cost (e.g., time in minutes)
     void addFlight(string city1, string city2, int cost) {
-        adjList[city1].push_back(make_pair(city2, cost)); // Add flight from city1 to city2 with cost
-        adjList[city2].push_back(make_pair(city1, cost)); // Assuming bidirectional flights
+        adjList[city1].push_back({city2, cost});
+        adjList[city2].push_back({city1, cost}); // Assuming bidirectional flight
     }
 
-    // Function to display all cities and their flight paths
+    // Display all cities and their flight paths
     void displayFlights() {
         for (auto& city : adjList) {
             cout << city.first << " -> ";
@@ -30,30 +37,47 @@ public:
             cout << endl;
         }
     }
+
+    // DFS utility to visit all reachable cities
+    void dfs(string city, set<string>& visited) {
+        visited.insert(city);
+        for (auto& neighbor : adjList[city]) {
+            if (visited.find(neighbor.first) == visited.end()) {
+                dfs(neighbor.first, visited);
+            }
+        }
+    }
+
+    // Check if the graph is connected
+    bool isConnected() {
+        if (adjList.empty()) return true;
+
+        set<string> visited;
+        string start = adjList.begin()->first;
+        dfs(start, visited);
+        return visited.size() == adjList.size();
+    }
 };
 
 int main() {
     Graph g;
-    int numCities, numFlights;
+    int numCities, numFlights, cost;
     string city1, city2;
-    int cost;
 
-    // Get number of cities and flights from user
     cout << "Enter number of cities: ";
     cin >> numCities;
 
-    // Take input for cities
+    // Input cities
     for (int i = 0; i < numCities; i++) {
         cout << "Enter city name: ";
         cin >> city1;
         g.addCity(city1);
     }
 
-    // Get number of flights
     cout << "Enter number of flights: ";
     cin >> numFlights;
 
-    // Take input for each flight
+    // Input flights between cities
     for (int i = 0; i < numFlights; i++) {
         cout << "Enter source city, destination city, and flight time (in minutes): ";
         cin >> city1 >> city2 >> cost;
@@ -63,6 +87,16 @@ int main() {
     // Display all flight paths
     cout << "\nFlight paths between cities:\n";
     g.displayFlights();
+
+    // Check connectivity of the graph
+    if (g.isConnected()) {
+        cout << "\nThe graph is connected. All cities are reachable from one another.\n";
+    } else {
+        cout << "\nThe graph is NOT connected. Some cities are unreachable from others.\n";
+    }
+
+    cout << "\nNote: Adjacency List is used for graph representation as it is more space-efficient for sparse graphs like flight networks,\n"
+         << "where most cities are not directly connected to every other city.\n";
 
     return 0;
 }
