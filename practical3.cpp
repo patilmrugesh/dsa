@@ -1,14 +1,15 @@
+// 3Beginning with an empty binary search tree, Construct binary search tree by inserting the values in the order given.
+//  After constructing a binary tree - i. Insert new node ii. Find number of nodes in longest path from root 
+//  iii. Minimum data value found in the tree iv. Change a tree so that the roles of the left and right pointers are swapped at every
+//   node v. Search a value
+
 #include <iostream>
-#include <queue>
 using namespace std;
 
 struct Node {
     int data;
     Node *left, *right;
-    Node(int val) {
-        data = val;
-        left = right = nullptr;
-    }
+    Node(int val) : data(val), left(nullptr), right(nullptr) {}
 };
 
 class BST {
@@ -16,10 +17,31 @@ class BST {
 
     Node* insert(Node* node, int val) {
         if (!node) return new Node(val);
-        if (val < node->data)
-            node->left = insert(node->left, val);
-        else
-            node->right = insert(node->right, val);
+        val < node->data ? node->left = insert(node->left, val)
+                         : node->right = insert(node->right, val);
+        return node;
+    }
+
+    bool search(Node* node, int key) {
+        if (!node) return false;
+        if (node->data == key) return true;
+        return key < node->data ? search(node->left, key) : search(node->right, key);
+    }
+
+    int height(Node* node) {
+        if (!node) return 0;
+        return max(height(node->left), height(node->right)) + 1;
+    }
+
+    int minValue(Node* node) {
+        while (node && node->left) node = node->left;
+        return node->data;
+    }
+
+    Node* mirror(Node* node) {
+        if (!node) return nullptr;
+        Node* l = mirror(node->left), *r = mirror(node->right);
+        node->left = r; node->right = l;
         return node;
     }
 
@@ -31,183 +53,34 @@ class BST {
         }
     }
 
-    void preorder(Node* node) {
-        if (node) {
-            cout << node->data << " ";
-            preorder(node->left);
-            preorder(node->right);
-        }
-    }
-
-    void postorder(Node* node) {
-        if (node) {
-            postorder(node->left);
-            postorder(node->right);
-            cout << node->data << " ";
-        }
-    }
-
-    int height(Node* node) {
-        if (!node) return 0;
-        int l = height(node->left);
-        int r = height(node->right);
-        return max(l, r) + 1;
-    }
-
-    int minValue(Node* node) {
-        Node* current = node;
-        while (current && current->left)
-            current = current->left;
-        return current->data;
-    }
-
-    Node* mirror(Node* node) {
-        if (!node) return nullptr;
-        Node* left = mirror(node->left);
-        Node* right = mirror(node->right);
-        node->left = right;
-        node->right = left;
-        return node;
-    }
-
-    bool search(Node* node, int key) {
-        if (!node) return false;
-        if (node->data == key) return true;
-        if (key < node->data)
-            return search(node->left, key);
-        return search(node->right, key);
-    }
-
-    Node* deleteNode(Node* node, int key) {
-        if (!node) return nullptr;
-        if (key < node->data)
-            node->left = deleteNode(node->left, key);
-        else if (key > node->data)
-            node->right = deleteNode(node->right, key);
-        else {
-            // Node with one child or no child
-            if (!node->left) {
-                Node* temp = node->right;
-                delete node;
-                return temp;
-            }
-            else if (!node->right) {
-                Node* temp = node->left;
-                delete node;
-                return temp;
-            }
-            // Node with two children
-            node->data = minValue(node->right);
-            node->right = deleteNode(node->right, node->data);
-        }
-        return node;
-    }
-
-    void BFS(Node* root) {
-        if (!root) return;
-        queue<Node*> q;
-        q.push(root);
-        while (!q.empty()) {
-            Node* curr = q.front(); q.pop();
-            cout << curr->data << " ";
-            if (curr->left) q.push(curr->left);
-            if (curr->right) q.push(curr->right);
-        }
-    }
-
 public:
-    BST() { root = nullptr; }
+    BST() : root(nullptr) {}
 
-    void insert(int val) {
-        root = insert(root, val);
-    }
-
-    void displayTraversals() {
-        cout << "Inorder: "; inorder(root); cout << endl;
-        cout << "Preorder: "; preorder(root); cout << endl;
-        cout << "Postorder: "; postorder(root); cout << endl;
-    }
-
-    void displayBFS() {
-        cout << "BFS: ";
-        BFS(root);
-        cout << endl;
-    }
-
-    void mirrorTree() {
-        root = mirror(root);
-        cout << "Tree mirrored.\n";
-    }
-
-    void deleteValue(int val) {
-        root = deleteNode(root, val);
-        cout << "Value deleted (if existed).\n";
-    }
-
-    void searchValue(int val) {
-        cout << (search(root, val) ? "Found\n" : "Not Found\n");
-    }
-
-    void printHeight() {
-        cout << "Longest Path (Height): " << height(root) << endl;
-    }
-
-    void printMin() {
-        if (root)
-            cout << "Minimum Value: " << minValue(root) << endl;
-        else
-            cout << "Tree is empty.\n";
-    }
+    void insert(int val) { root = insert(root, val); }
+    void search(int val) { cout << (search(root, val) ? "Found\n" : "Not Found\n"); }
+    void printHeight() { cout << "Height: " << height(root) << endl; }
+    void printMin() { if (root) cout << "Min: " << minValue(root) << endl; }
+    void mirrorTree() { root = mirror(root); cout << "Tree mirrored.\n"; }
+    void showInorder() { cout << "Inorder: "; inorder(root); cout << endl; }
 };
 
 int main() {
     BST tree;
-    int initial[] = {50, 30, 70, 20, 40, 60, 80};
-    for (int val : initial)
-        tree.insert(val);
+    int init[] = {50, 30, 70, 20, 40, 60, 80};
+    for (int val : init) tree.insert(val);
 
-    int choice, value;
+    int ch, val;
     do {
-        cout << "\n1.Insert \n2.Delete \n3.Search \n4.Mirror \n5.Height \n6.Minimum \n7.Traversals \n8.BFS \n9.Exit\nChoice: ";
-        cin >> choice;
-        switch (choice) {
-        case 1:
-            cout << "Enter value to insert: ";
-            cin >> value;
-            tree.insert(value);
-            break;
-        case 2:
-            cout << "Enter value to delete: ";
-            cin >> value;
-            tree.deleteValue(value);
-            break;
-        case 3:
-            cout << "Enter value to search: ";
-            cin >> value;
-            tree.searchValue(value);
-            break;
-        case 4:
-            tree.mirrorTree();
-            break;
-        case 5:
-            tree.printHeight();
-            break;
-        case 6:
-            tree.printMin();
-            break;
-        case 7:
-            tree.displayTraversals();
-            break;
-        case 8:
-            tree.displayBFS();
-            break;
-        case 9:
-            cout << "Exiting.\n";
-            break;
-        default:
-            cout << "Invalid choice.\n";
+        cout << "\n1.Insert 2.Search 3.Height 4.Min 5.Mirror 6.Inorder 7.Exit\nChoice: ";
+        cin >> ch;
+        switch (ch) {
+            case 1: cout << "Enter value: "; cin >> val; tree.insert(val); break;
+            case 2: cout << "Enter value: "; cin >> val; tree.search(val); break;
+            case 3: tree.printHeight(); break;
+            case 4: tree.printMin(); break;
+            case 5: tree.mirrorTree(); break;
+            case 6: tree.showInorder(); break;
         }
-    } while (choice != 9);
-
+    } while (ch != 7);
     return 0;
 }
