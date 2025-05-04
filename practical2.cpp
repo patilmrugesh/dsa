@@ -1,90 +1,77 @@
+// 2 Implement all the functions of a dictionary (ADT) using hashing and handle collisions using chaining with / without replacement.
+//  Data: Set of (key, value) pairs, Keys are mapped to values,
+//  Keys must be comparable, Keys must be unique Standard Operations: Insert(key, value), Find(key), Delete(key)
+
 #include <iostream>
-#include <string>
 using namespace std;
 
-const int TABLE_SIZE = 10;
+const int SIZE = 10;
 
 struct Node {
-    string key;
-    string value;
+    string key, value;
     Node* next;
 };
-
 class HashTable {
-private:
-    Node* table[TABLE_SIZE];
+    Node* table[SIZE];
 
-    int hashFunction(string key) {
+    int hashFunc(string key) {
         int sum = 0;
-        for (char c : key)
-            sum += c;
-        return sum % TABLE_SIZE;
+        for (char c : key) sum += c;
+        return sum % SIZE;
     }
-
 public:
     HashTable() {
-        for (int i = 0; i < TABLE_SIZE; i++)
-            table[i] = nullptr;
+        for (int i = 0; i < SIZE; i++) table[i] = nullptr;
     }
-
     void insert(string key, string value) {
-        int index = hashFunction(key);
-        Node* newNode = new Node{key, value, nullptr};
-
-        if (!table[index]) {
-            table[index] = newNode;
-        } else {
-            // Chain at the end
-            Node* current = table[index];
-            while (current->next)
-                current = current->next;
-            current->next = newNode;
+        int idx = hashFunc(key);
+        Node* curr = table[idx];
+        while (curr) {
+            if (curr->key == key) {
+                cout << "Key already exists.\n";
+                return;
+            }
+            curr = curr->next;
         }
+        Node* newNode = new Node{key, value, table[idx]};
+        table[idx] = newNode;
         cout << "Inserted (" << key << ", " << value << ")\n";
     }
-
     void search(string key) {
-        int index = hashFunction(key);
-        Node* current = table[index];
-        while (current) {
-            if (current->key == key) {
-                cout << "Found: " << current->value << "\n";
+        int idx = hashFunc(key);
+        Node* curr = table[idx];
+        while (curr) {
+            if (curr->key == key) {
+                cout << "Found: " << curr->value << "\n";
                 return;
             }
-            current = current->next;
+            curr = curr->next;
+        }
+        cout << "Not found.\n";
+    }
+    void del(string key) {
+        int idx = hashFunc(key);
+        Node *curr = table[idx], *prev = nullptr;
+        while (curr) {
+            if (curr->key == key) {
+                if (prev) prev->next = curr->next;
+                else table[idx] = curr->next;
+                delete curr;
+                cout << "Deleted.\n";
+                return;
+            }
+            prev = curr;
+            curr = curr->next;
         }
         cout << "Key not found.\n";
     }
-
-    void deleteKey(string key) {
-        int index = hashFunction(key);
-        Node* current = table[index];
-        Node* prev = nullptr;
-
-        while (current) {
-            if (current->key == key) {
-                if (prev)
-                    prev->next = current->next;
-                else
-                    table[index] = current->next;
-                delete current;
-                cout << "Deleted key: " << key << "\n";
-                return;
-            }
-            prev = current;
-            current = current->next;
-        }
-
-        cout << "Key not found.\n";
-    }
-
     void display() {
-        for (int i = 0; i < TABLE_SIZE; i++) {
+        for (int i = 0; i < SIZE; i++) {
             cout << "[" << i << "] -> ";
-            Node* current = table[i];
-            while (current) {
-                cout << "(" << current->key << ", " << current->value << ") -> ";
-                current = current->next;
+            Node* curr = table[i];
+            while (curr) {
+                cout << "(" << curr->key << ", " << curr->value << ") -> ";
+                curr = curr->next;
             }
             cout << "NULL\n";
         }
@@ -92,36 +79,17 @@ public:
 };
 int main() {
     HashTable dict;
-    int choice;
+    int ch;
     string key, value;
-
     do {
-        cout << "\n1. Insert\n2. Search\n3. Delete\n4. Display\n5. Exit\nEnter choice: ";
-        cin >> choice;
-
-        switch (choice) {
-            case 1:
-                cout << "Enter key: ";
-                cin >> key;
-                cout << "Enter value: ";
-                cin >> value;
-                dict.insert(key, value);
-                break;
-            case 2:
-                cout << "Enter key to search: ";
-                cin >> key;
-                dict.search(key);
-                break;
-            case 3:
-                cout << "Enter key to delete: ";
-                cin >> key;
-                dict.deleteKey(key);
-                break;
-            case 4:
-                dict.display();
-                break;
+        cout << "\n1.Insert 2.Search 3.Delete 4.Display 5.Exit\nEnter choice: ";
+        cin >> ch;
+        switch (ch) {
+            case 1: cout << "Key: "; cin >> key; cout << "Value: "; cin >> value; dict.insert(key, value); break;
+            case 2: cout << "Search key: "; cin >> key; dict.search(key); break;
+            case 3: cout << "Delete key: "; cin >> key; dict.del(key); break;
+            case 4: dict.display(); break;
         }
-    } while (choice != 5);
-
+    } while (ch != 5);
     return 0;
 }
