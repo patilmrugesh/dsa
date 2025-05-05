@@ -1,81 +1,107 @@
+// 6Represent a given graph using adjacency matrix/list to perform DFS and using adjacency list to perform BFS.
+// Use the map of the area around the college as the graph. Identify the prominent land marks as nodes and perform DFS and BFS on that.
+
 #include <iostream>
-#include <stdlib.h>
+#include <map>
+#include <vector>
+#include <queue>
+#include <stack>
+#include <set>
 using namespace std;
 
-int cost[10][10], i, j, k, n, qu[10], front, rear, v, visit[10], visited[10];
-int stk[10], top, visit1[10], visited1[10];
+class Graph {
+    map<string, vector<string>> adjList;
 
-int main()
-{
-    int m;
-    cout << "Enter number of vertices : ";
-    cin >> n;
-    cout << "Enter number of edges : ";
-    cin >> m;
-
-    cout << "\nEDGES :\n";
-    for (k = 1; k <= m; k++)
-    {
-        cin >> i >> j;
-        cost[i][j] = 1;
-        cost[j][i] = 1;
+public:
+    // Add an edge between landmarks
+    void addEdge(string u, string v) {
+        adjList[u].push_back(v);
+        adjList[v].push_back(u); // Undirected
     }
 
-    // display function
-    cout << "The adjacency matrix of the graph is : " << endl;
-    for (i = 0; i < n; i++)
-    {
-        for (j = 0; j < n; j++)
-        {
-            cout << " " << cost[i][j];
+    // Display the adjacency list
+    void displayGraph() {
+        cout << "\nGraph (Adjacency List):\n";
+        for (auto &pair : adjList) {
+            cout << pair.first << " -> ";
+            for (auto &neighbor : pair.second) {
+                cout << neighbor << ", ";
+            }
+            cout << "\n";
         }
-        cout << endl;
     }
 
-    cout << "Enter initial vertex : ";
-    cin >> v;
-    cout << "The BFS of the Graph is\n";
-    cout << v << endl;
-    visited[v] = 1;
-    k = 1;
-    while (k < n)
-    {
-        for (j = 1; j <= n; j++)
-            if (cost[v][j] != 0 && visited[j] != 1 && visit[j] != 1)
-            {
-                visit[j] = 1;
-                qu[rear++] = j;
+    // BFS Traversal
+    void bfs(string start) {
+        set<string> visited;
+        queue<string> q;
+        q.push(start);
+        visited.insert(start);
+
+        cout << "\nBFS Traversal starting from " << start << ":\n";
+        while (!q.empty()) {
+            string current = q.front();
+            q.pop();
+            cout << current << " ";
+
+            for (auto &neighbor : adjList[current]) {
+                if (visited.find(neighbor) == visited.end()) {
+                    visited.insert(neighbor);
+                    q.push(neighbor);
+                }
             }
-        v = qu[front++];
-        cout << v << " ";
-        k++;
-        visit[v] = 0;
-        visited[v] = 1;
+        }
+        cout << "\n";
     }
 
-    cout << endl
-         << "Enter initial vertex : ";
-    cin >> v;
-    cout << "The DFS of the Graph is\n";
-    cout << v << endl;
-    visited[v] = 1;
-    k = 1;
+    // DFS Traversal
+    void dfs(string start) {
+        set<string> visited;
+        stack<string> s;
+        s.push(start);
 
-    while (k < n)
-    {
-        for (j = n; j >= 1; j--)
-            if (cost[v][j] != 0 && visited1[j] != 1 && visit1[j] != 1)
-            {
-                visit1[j] = 1;
-                stk[top] = j;
-                top++;
+        cout << "\nDFS Traversal starting from " << start << ":\n";
+        while (!s.empty()) {
+            string current = s.top();
+            s.pop();
+
+            if (visited.find(current) == visited.end()) {
+                visited.insert(current);
+                cout << current << " ";
+
+                for (auto it = adjList[current].rbegin(); it != adjList[current].rend(); ++it) {
+                    if (visited.find(*it) == visited.end()) {
+                        s.push(*it);
+                    }
+                }
             }
-        v = stk[--top];
-        cout << v << " ";
-        k++;
-        visit1[v] = 0;
-        visited1[v] = 1;
+        }
+        cout << "\n";
     }
+};
+
+int main() {
+    Graph g;
+
+    // Sample College Map Landmarks (customize as needed)
+    g.addEdge("Library", "Canteen");
+    g.addEdge("Library", "Admin Block");
+    g.addEdge("Canteen", "Auditorium");
+    g.addEdge("Admin Block", "Main Gate");
+    g.addEdge("Auditorium", "Playground");
+    g.addEdge("Main Gate", "Playground");
+
+    g.displayGraph();
+
+    string startNode;
+    cout << "\nEnter starting landmark for traversal (e.g., Library): ";
+    cin >> ws; // to consume any trailing newline
+    getline(cin, startNode);
+
+    g.bfs(startNode);
+    g.dfs(startNode);
+
+    cout << "\nNote: Adjacency List is used as the graph is sparse and it saves memory.\n";
 
     return 0;
 }
