@@ -1,3 +1,8 @@
+// 11Department maintains a student information. The file contains roll number, name, division and address.
+// Allow user to add, delete information of student. Display information of particular employee.
+// If record of student does not exist an appropriate message is displayed. If it is, then the system displays the student details.
+// Use sequential file to main the data.
+
 #include <iostream>
 #include <fstream>
 #include <cstring>
@@ -25,7 +30,7 @@ public:
         cout << "University Marks: "; cin >> uni_marks;
     }
 
-    void putData() {
+    void putData() const {
         cout << "\nRoll No: " << rollno << "\tName: " << name
              << "\nSubject Code: " << subcode << "\tSubject: " << subject
              << "\nInternal: " << internal_marks << "\tUniversity: " << uni_marks << "\n";
@@ -33,34 +38,33 @@ public:
 };
 
 class File {
-    fstream fs;
-    const char* fname = "Records.dat";
+    const char *fname = "Records.dat";
 
 public:
     void insert() {
         Record r;
         r.getData();
         ofstream fout(fname, ios::app | ios::binary);
-        fout.write((char*)&r, sizeof(r));
+        fout.write(reinterpret_cast<char*>(&r), sizeof(r));
     }
 
     void display() {
         Record r;
         ifstream fin(fname, ios::binary);
-        while (fin.read((char*)&r, sizeof(r)))
+        while (fin.read(reinterpret_cast<char*>(&r), sizeof(r)))
             r.putData();
     }
 
     void search(int rollno) {
         Record r;
-        bool found = false;
         ifstream fin(fname, ios::binary);
-        while (fin.read((char*)&r, sizeof(r))) {
+        while (fin.read(reinterpret_cast<char*>(&r), sizeof(r))) {
             if (r.getRollno() == rollno) {
-                r.putData(); found = true; break;
+                r.putData();
+                return;
             }
         }
-        if (!found) cout << "\nRecord not found.\n";
+        cout << "\nRecord not found.\n";
     }
 
     bool Delete(int rollno) {
@@ -68,11 +72,12 @@ public:
         bool found = false;
         ifstream fin(fname, ios::binary);
         ofstream fout("Temp.dat", ios::binary);
-        while (fin.read((char*)&r, sizeof(r))) {
+        while (fin.read(reinterpret_cast<char*>(&r), sizeof(r))) {
             if (r.getRollno() == rollno) found = true;
-            else fout.write((char*)&r, sizeof(r));
+            else fout.write(reinterpret_cast<char*>(&r), sizeof(r));
         }
-        fin.close(); fout.close();
+        fin.close();
+        fout.close();
         remove(fname);
         rename("Temp.dat", fname);
         return found;
@@ -80,20 +85,17 @@ public:
 
     bool edit(int rollno) {
         Record r;
-        bool found = false;
-        fs.open(fname, ios::in | ios::out | ios::binary);
-        while (fs.read((char*)&r, sizeof(r))) {
+        fstream fs(fname, ios::in | ios::out | ios::binary);
+        while (fs.read(reinterpret_cast<char*>(&r), sizeof(r))) {
             if (r.getRollno() == rollno) {
-                found = true;
                 cout << "\nEnter new details:\n";
                 r.getData();
-                fs.seekp((int)fs.tellg() - sizeof(r));
-                fs.write((char*)&r, sizeof(r));
-                break;
+                fs.seekp(static_cast<int>(fs.tellg()) - sizeof(r));
+                fs.write(reinterpret_cast<char*>(&r), sizeof(r));
+                return true;
             }
         }
-        fs.close();
-        return found;
+        return false;
     }
 };
 
@@ -104,17 +106,29 @@ int main() {
     do {
         cout << "\n--- MENU ---\n1. Insert\n2. Display\n3. Search\n4. Delete\n5. Edit\n6. Exit\nChoice: ";
         cin >> choice;
+
         switch (choice) {
             case 1: f.insert(); break;
             case 2: f.display(); break;
-            case 3: cout << "Enter Roll No: "; cin >> roll; f.search(roll); break;
-            case 4: cout << "Enter Roll No to Delete: "; cin >> roll;
-                    if (f.Delete(roll)) cout << "Deleted.\n"; else cout << "Not Found.\n"; break;
-            case 5: cout << "Enter Roll No to Edit: "; cin >> roll;
-                    if (f.edit(roll)) cout << "Updated.\n"; else cout << "Not Found.\n"; break;
+            case 3: 
+                cout << "Enter Roll No: "; 
+                cin >> roll; 
+                f.search(roll); 
+                break;
+            case 4: 
+                cout << "Enter Roll No to Delete: "; 
+                cin >> roll;
+                cout << (f.Delete(roll) ? "Deleted.\n" : "Not Found.\n");
+                break;
+            case 5: 
+                cout << "Enter Roll No to Edit: "; 
+                cin >> roll;
+                cout << (f.edit(roll) ? "Updated.\n" : "Not Found.\n");
+                break;
             case 6: break;
             default: cout << "Invalid choice.\n";
         }
     } while (choice != 6);
+
     return 0;
 }
